@@ -27,6 +27,7 @@ const ForkTsCheckerWebpackPlugin =
 const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
 
 const createEnvironmentHash = require('./webpack/persistentCache/createEnvironmentHash');
+const { exit } = require('process');
 
 // Source maps are resource heavy and can cause out of memory issue for large source files.
 const shouldUseSourceMap = process.env.GENERATE_SOURCEMAP !== 'false';
@@ -84,6 +85,37 @@ const hasJsxRuntime = (() => {
     return false;
   }
 })();
+
+const assertKeyOrder = (obj, key1, key2) => {
+  const allKeys = Object.keys(obj);
+  const index1 = allKeys.indexOf(key1);
+  if (index1 < 0) {
+    console.error(`key ${key1} not found!`)
+    exit(1);
+  }
+
+  const index2 = allKeys.indexOf(key2);
+  if (index2 < 0) {
+    console.error(`key ${key2} not found!`)
+    exit(1);
+  }
+
+  if (index1 > index2) {
+    console.error(`Expected key ${key1} to appear before ${key2}, but it appears after`)
+    exit(1);
+  }
+}
+
+if (process.argv.includes("--swap-env-order")) {
+  process.env.REACT_APP_VAR2 = "VAR2"
+  process.env.REACT_APP_VAR1 = "VAR1"
+  assertKeyOrder(process.env, "REACT_APP_VAR2", "REACT_APP_VAR1")
+}
+else {
+  process.env.REACT_APP_VAR1 = "VAR1"
+  process.env.REACT_APP_VAR2 = "VAR2"
+  assertKeyOrder(process.env, "REACT_APP_VAR1", "REACT_APP_VAR2")
+}
 
 // This is the production and development configuration.
 // It is focused on developer experience, fast rebuilds, and a minimal bundle.
